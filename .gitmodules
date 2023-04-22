@@ -1,0 +1,4 @@
+[submodule "Faucet"]
+	path = Faucet
+	url = https://github.com/Fragamir/Faucet.git
+	branch = integrity
