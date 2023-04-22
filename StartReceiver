@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd Faucet
+sudo -E ip netns exec FaucetNSreceiver julia --project=. src/receiver.jl ../target FaucetNSrecva
+cd ..

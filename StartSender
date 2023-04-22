@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd Faucet
+sudo -E ip netns exec FaucetNSsender julia --project=. src/sender.jl ../target FaucetNSsenda
+cd ..

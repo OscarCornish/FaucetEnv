@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf Faucet packets
+sudo julia -L "namespaces.jl" -e "teardown()"

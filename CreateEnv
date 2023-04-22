@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Usage: ./CreateEnv branch
+
+REPO="https://github.com/Fragamir/Faucet.git"
+BRANCH="integrity"
+
+
+# Clone the repository
+git clone -b $BRANCH $REPO
+
+# Create namespaces
+sudo julia -L "namespaces.jl" -e "create_Faucet_env()"

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo ip netns exec FaucetNSsender tcpreplay -i FaucetNSsenda Traffic/Rebased/rebased.1427241610.pcap
