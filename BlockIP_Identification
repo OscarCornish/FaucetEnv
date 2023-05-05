@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo ip netns exec FaucetNSbridge /home/elshrimpo/miniconda3/bin/python3 filter.py null_IP_Identification

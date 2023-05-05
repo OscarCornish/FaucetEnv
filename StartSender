@@ -1,5 +1,3 @@
 #!/bin/bash
 
-cd Faucet
-sudo -E ip netns exec FaucetNSsender julia -t 2 --project=. src/sender.jl ../target FaucetNSsenda
-cd ..
+source StartTestEnv sender

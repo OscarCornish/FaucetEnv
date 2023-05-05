@@ -1,0 +1,48 @@
+#!/bin/bash
+
+init_packages() {
+    sudo -E alacritty --working-directory $PWD/Faucet -e julia -e "@info \"Installing packages\"; using Pkg; Pkg.activate(\".\"); Pkg.precompile()"
+}
+
+sender() {
+    JULIA_DEBUG=all sudo -E alacritty --working-directory $PWD/Faucet -e ip netns exec FaucetNSsender julia -t 4 --project=$PWD/Faucet src/sender.jl ../target FaucetNSsenda ; sleep 5
+}
+
+receiver() {
+    JULIA_DEBUG=all sudo -E alacritty --working-directory $PWD/Faucet -e ip netns exec FaucetNSreceiver julia -t 4 --project=$PWD/Faucet src/receiver.jl ../target FaucetNSrecva ; sleep 5
+}
+
+dumper() {
+    sudo ip netns exec FaucetNSsender tcpreplay -i FaucetNSsenda Traffic/Rebased/rebased.1427241610.pcap ? > /dev/null
+}
+
+arpflood() {
+    sudo ip netns exec FaucetNSaux arping 10.20.30.2 -i1 > /dev/null
+}
+
+main() {
+    init_packages
+
+    sender & pid_sender=($!)
+    receiver & pid_receiver=($!)
+    
+    dumper & pid_dumper=($!)
+    arpflood & pid_arpflood=($!)
+
+    wait "$pid_sender"
+    wait "$pid_receiver"
+    kill "$pid_dumper"
+    kill "$pid_arpflood"
+    echo "Finished"
+}
+
+# Check if the function exists (bash specific)
+if declare -f "$1" > /dev/null
+then
+  # call arguments verbatim
+  "$@"
+else
+  # Show a helpful error
+  echo "'$1' is not a known function name" >&2
+  exit 1
+fi

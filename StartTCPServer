@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# Start a HTTP server on port 80
-
-sudo ip netns exec FaucetNSaux python3 -m http.server 80

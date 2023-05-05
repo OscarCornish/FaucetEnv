@@ -1,31 +1,18 @@
 import sys
-from scapy.all import *
+import scapy.all as scapy
 
-if len(sys.argv) != 3: 
-    print("Usage:./ChecksumFixer  <input_pcap_file> <output_pcap_file>")
-    print("Example: ./ChecksumFixer input.pcap output.pcap")
-    sys.exit(1)
-
-#------------------------Command Line Argument---------------------------------------
-
-input_file = sys.argv[1]
-output_file = sys.argv[2]
-
-#------------------------Get The layer and Fix Checksum-------------------------------
-
-def getLayer(p):
-    for paktype in (IP, TCP, UDP, ICMP):
-        try:
-            p.getlayer(paktype).chksum = None
-        except: AttributeError
-        pass
-    return p
-#-----------------------FixPcap in input file and write to output file----------------
-
-def fixpcap():
-    paks = rdpcap(input_file)
-    fc = map(getLayer, paks)
-    wrpcap(output_file, fc) 
+def null_checksum(packet):
+    for layer in (scapy.IP, scapy.TCP, scapy.UDP, scapy.ICMP):
+        if packet.haslayer(layer):
+            print(layer)
+            packet[layer].chksum = None
+    return packet
 
 if __name__ == "__main__":
-    fixpcap()
+    if len(sys.argv) != 3:
+        print("Usage: ./fix_checksum.py <input_pcap_file> <output_pcap_file>")
+        exit(-1)
+    _packets = scapy.rdpcap(sys.argv[1])
+    packets = map(null_checksum, _packets)
+    scapy.wrpcap(sys.argv[2], packets)
+    exit(0)

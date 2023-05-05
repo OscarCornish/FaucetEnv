@@ -1,5 +1,3 @@
 #!/bin/bash
 
-cd Faucet
-sudo -E ip netns exec FaucetNSreceiver julia -t 2 --project=. src/receiver.jl ../target FaucetNSrecva
-cd ..
+source StartTestEnv receiver
