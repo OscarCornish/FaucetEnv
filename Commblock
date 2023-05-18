@@ -1,0 +1,70 @@
+#!/bin/bash
+
+init_packages() {
+    alacritty --working-directory $PWD/Faucet -e julia -e "@info \"Installing packages\"; using Pkg; Pkg.activate(\".\"); Pkg.precompile()"
+}
+
+sender() {
+    JULIA_DEBUG=all alacritty --hold -t "Faucet: sender" --working-directory $PWD/Faucet -e ip netns exec FaucetNSsender julia -t 4 --project=$PWD/Faucet src/sender.jl ../target FaucetNSsenda $1
+}
+
+receiver() {
+    JULIA_DEBUG=all alacritty --hold -t "Faucet: receiver" --working-directory $PWD/Faucet -e ip netns exec FaucetNSreceiver julia -t 4 --project=$PWD/Faucet src/receiver.jl ../target FaucetNSrecva $1
+}
+
+dumper() {
+    sudo ip netns exec FaucetNSsender tcpreplay -i FaucetNSsenda Traffic/Rebased/merged.pcap > /dev/null
+}
+
+arpflood() {
+    ip netns exec FaucetNSaux arping 10.20.30.2 -i1 &> /dev/null
+}
+
+cap() {
+    ip netns exec FaucetNSsender tcpdump -U -i FaucetNSsenda -w Testing-Data/pcaps/$1.pcap &> /dev/null
+}
+
+block_ip() {
+    ip netns exec FaucetNSbridge /home/elshrimpo/miniconda3/bin/python3 filter.py null_IP_Identification > /dev/null
+}
+
+kill_descendant_processes() {
+    # In-order traversal (children first)
+    local pid="$1"
+    local self="${2:-false}"
+    if children="$(pgrep -P "$pid")"; then
+        for child in $children; do
+            kill_descendant_processes "$child" true
+        done
+    fi
+    if [[ "$self" == true ]]; then
+        kill "$pid"
+    fi
+}
+
+init_packages
+
+main() {
+    cap $1 & pid_cap=($!)
+    echo "?"
+    sender $1 & pid_sender=($!)
+    receiver $1 & pid_receiver=($!)
+    
+    dumper & pid_dumper=($!)
+    echo "!?"
+
+    sleep $2
+    block_ip & pid_block=($!)
+
+    wait "$pid_sender"
+    wait "$pid_receiver"
+
+    kill -2 "$pid_cap" # Try interrupt first
+    kill -2 "$pid_block"
+    kill -2 `pgrep tcpdump`
+
+    kill_descendant_processes $$ # Everything should have been killed by now, so just blast it
+    echo "Finished ($1)"
+}
+
+main 50 20

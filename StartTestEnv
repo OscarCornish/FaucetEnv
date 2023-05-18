@@ -20,22 +20,6 @@ arpflood() {
     sudo ip netns exec FaucetNSaux arping 10.20.30.2 -i1 > /dev/null
 }
 
-main() {
-    init_packages
-
-    sender & pid_sender=($!)
-    receiver & pid_receiver=($!)
-    
-    dumper & pid_dumper=($!)
-    arpflood & pid_arpflood=($!)
-
-    wait "$pid_sender"
-    wait "$pid_receiver"
-    kill "$pid_dumper"
-    kill "$pid_arpflood"
-    echo "Finished"
-}
-
 # Check if the function exists (bash specific)
 if declare -f "$1" > /dev/null
 then
