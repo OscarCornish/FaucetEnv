@@ -5,11 +5,11 @@ init_packages() {
 }
 
 sender() {
-    JULIA_DEBUG=all alacritty --hold -t "Faucet: sender" --working-directory $PWD/Faucet -e ip netns exec FaucetNSsender julia -t 4 --project=$PWD/Faucet src/sender.jl ../target FaucetNSsenda $1 && sleep 5
+    JULIA_DEBUG=all alacritty -t "Faucet: sender" --working-directory $PWD/Faucet -e ip netns exec FaucetNSsender julia -t 4 --project=$PWD/Faucet src/sender.jl ../target FaucetNSsenda $1 && sleep 5
 }
 
 receiver() {
-    JULIA_DEBUG=all alacritty --hold -t "Faucet: receiver" --working-directory $PWD/Faucet -e ip netns exec FaucetNSreceiver julia -t 4 --project=$PWD/Faucet src/receiver.jl ../target FaucetNSrecva $1; sleep 5
+    JULIA_DEBUG=all alacritty -t "Faucet: receiver" --working-directory $PWD/Faucet -e ip netns exec FaucetNSreceiver julia -t 4 --project=$PWD/Faucet src/receiver.jl ../target FaucetNSrecva $1; sleep 5
 }
 
 dumper() {
@@ -47,6 +47,8 @@ init_packages
 main() {
 
     cap $1 & pid_cap=($!)
+
+    sleep 100
     sender $1 & pid_sender=($!)
     receiver $1 & pid_receiver=($!)
     
