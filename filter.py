@@ -15,8 +15,13 @@ def null_IP_Identification(_packet):
         _packet.set_payload(bytes(packet))
     _packet.accept()
 
-queue = NetfilterQueue()
-queue.bind(0, null_IP_Identification)
+def map_TCP_ACK(_packet):
+    packet = scapy.IP(_packet.get_payload())
+    if packet.haslayer(scapy.TCP):
+        packet[scapy.TCP].ack = 0
+        packet[scapy.TCP].chksum = None
+        _packet.set_payload(bytes(packet))
+    _packet.accept()
 
 if __name__ == "__main__":
     queue = NetfilterQueue()

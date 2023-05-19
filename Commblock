@@ -13,7 +13,7 @@ receiver() {
 }
 
 dumper() {
-    sudo ip netns exec FaucetNSsender tcpreplay -i FaucetNSsenda Traffic/Rebased/merged.pcap > /dev/null
+    ip netns exec FaucetNSsender ./gopherCap replay --out-interface FaucetNSsenda --dump-json Traffic/Rebased/meta.json &> /dev/null
 }
 
 arpflood() {
@@ -24,9 +24,9 @@ cap() {
     ip netns exec FaucetNSsender tcpdump -U -i FaucetNSsenda -w Testing-Data/pcaps/$1.pcap &> /dev/null
 }
 
-block_ip() {
-    ip netns exec FaucetNSbridge /home/elshrimpo/miniconda3/bin/python3 filter.py null_IP_Identification > /dev/null
-}
+block_ACK() {
+    ip netns exec FaucetNSbridge /home/elshrimpo/miniconda3/bin/python3 filter.py map_TCP_ACK # > /dev/null
+} 
 
 kill_descendant_processes() {
     # In-order traversal (children first)
@@ -45,26 +45,30 @@ kill_descendant_processes() {
 init_packages
 
 main() {
+    ip netns exec FaucetNSbridge iptables -F
+
     cap $1 & pid_cap=($!)
-    echo "?"
+
     sender $1 & pid_sender=($!)
     receiver $1 & pid_receiver=($!)
     
+    arpflood & pid_arp=($!)
     dumper & pid_dumper=($!)
-    echo "!?"
 
     sleep $2
-    block_ip & pid_block=($!)
+    block_ACK & pid_block=($!)
 
     wait "$pid_sender"
     wait "$pid_receiver"
 
+    kill -2 "$arpflood"
     kill -2 "$pid_cap" # Try interrupt first
     kill -2 "$pid_block"
     kill -2 `pgrep tcpdump`
 
     kill_descendant_processes $$ # Everything should have been killed by now, so just blast it
     echo "Finished ($1)"
+    ip netns exec FaucetNSbridge iptables -F
 }
 
-main 50 20
+main 25 15
